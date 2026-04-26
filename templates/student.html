@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Student Dashboard – BlockSubmit</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',sans-serif; }
+        body {
+            background:linear-gradient(-45deg,#000000,#111111,#1a1a1a,#000000);
+            background-size:400% 400%; animation:gradientMove 12s ease infinite;
+            color:white; min-height:100vh;
+        }
+        @keyframes gradientMove {
+            0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}
+        }
+        .header {
+            display:flex; justify-content:space-between; align-items:center;
+            padding:20px 60px; border-bottom:1px solid rgba(255,255,255,.1);
+        }
+        .logo { font-size:24px; font-weight:900; letter-spacing:4px;
+            text-shadow:0 0 6px rgba(255,255,255,.7),0 0 12px rgba(0,255,255,.3); }
+        .header-right { display:flex; gap:12px; align-items:center; }
+        .btn-metamask {
+            background:linear-gradient(135deg,#f6851b,#e2761b);
+            padding:10px 18px; border-radius:10px; border:none;
+            color:white; cursor:pointer; font-weight:bold; font-size:13px; transition:.3s;
+        }
+        .btn-metamask:hover { transform:scale(1.05); }
+        .btn-logout {
+            background:#ff4d4d; padding:10px 18px; border-radius:10px;
+            border:none; color:white; cursor:pointer; font-weight:bold; transition:.3s;
+        }
+        .btn-logout:hover { background:#ff1a1a; }
+        .wallet-info {
+            font-size:12px; color:#94a3b8;
+            background:rgba(255,255,255,.05); padding:8px 14px; border-radius:8px;
+        }
+        .container { padding:40px 70px; }
+        h2 { margin-bottom:30px; font-size:28px; }
+        .dashboard { display:flex; gap:30px; flex-wrap:wrap; }
+        .box {
+            flex:1; min-width:320px; max-width:480px;
+            background:rgba(255,255,255,.05); padding:28px;
+            border-radius:20px; backdrop-filter:blur(20px);
+            box-shadow:0 0 35px rgba(0,0,0,.9); transition:.3s;
+        }
+        .box:hover { transform:translateY(-4px); }
+        .box h3 { margin-bottom:16px; font-size:18px; }
+        select {
+            width:100%; padding:12px; margin:10px 0;
+            border-radius:10px; border:none; background:#111; color:white;
+        }
+        input[type=file] {
+            width:100%; padding:12px; margin:10px 0;
+            border-radius:10px; border:1px dashed #444;
+            background:#1e1e1e; color:white;
+        }
+        .btn-upload {
+            width:100%; padding:13px; margin-top:10px;
+            background:white; color:black; font-weight:bold;
+            border:none; border-radius:10px; cursor:pointer; transition:.3s;
+        }
+        .btn-upload:hover { background:#ddd; transform:scale(1.02); }
+        .btn-upload:disabled { background:#555; color:#999; cursor:not-allowed; transform:none; }
+        #uploadMsg  { margin-top:12px; font-size:14px; line-height:1.8; }
+        #result     { margin-top:12px; font-size:14px; line-height:1.8; }
+        .chain-status {
+            margin-top:40px; background:rgba(255,255,255,.04);
+            border-radius:16px; padding:22px;
+        }
+        .chain-status h3 { margin-bottom:14px; }
+        .node-row { display:flex; gap:12px; flex-wrap:wrap; }
+        .node-badge { padding:8px 16px; border-radius:8px; font-size:13px; font-weight:bold; }
+        .node-ok  { background:rgba(74,222,128,.15); color:#4ade80; }
+        .node-err { background:rgba(248,113,113,.15); color:#f87171; }
+        .node-eth { background:rgba(99,102,241,.15); color:#a5b4fc; }
+        .step-line { font-size:12px; margin-top:6px; padding:6px 10px;
+            border-radius:8px; background:rgba(255,255,255,.04); }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="logo">BLOCKSUBMIT</div>
+    <div class="header-right">
+        <div class="wallet-info" id="walletInfo">MetaMask: Not connected</div>
+        <button class="btn-metamask" onclick="connectMetaMask()">🦊 Connect MetaMask</button>
+        <a href="/logout"><button class="btn-logout">Logout</button></a>
+    </div>
+</div>
+
+<div class="container">
+    <h2>🎓 Student Dashboard &nbsp;<small style="font-size:16px;color:#94a3b8">{{ session['user'] }}</small></h2>
+
+    <div class="dashboard">
+
+        <!-- ── Upload Assignment ── -->
+        <div class="box">
+            <h3>📂 Upload Assignment</h3>
+            {% if session['courses'] %}
+            <!-- NOTE: no method/action — submitted via JS fetch to prevent page reload -->
+            <form id="uploadForm">
+                <select id="uploadCourse" required>
+                    {% for c in session['courses'] %}
+                    <option value="{{ c }}">{{ c }}</option>
+                    {% endfor %}
+                </select>
+                <input type="file" id="uploadFile" required>
+                <button class="btn-upload" id="uploadBtn" type="submit">
+                    Upload &amp; Record on Blockchain
+                </button>
+            </form>
+            {% else %}
+            <p style="color:#f87171;margin-top:10px;">
+                ⚠️ No courses assigned.<br>
+                <a href="/logout" style="color:#38bdf8;">Logout</a> and sign up again
+                with course IDs (e.g. CS101,CS102).
+            </p>
+            {% endif %}
+            <div id="uploadMsg"></div>
+        </div>
+
+        <!-- ── Verify Submission ── -->
+        <div class="box">
+            <h3>🔍 Verify My Submission</h3>
+            {% if session['courses'] %}
+            <form id="verifyForm">
+                <select id="verifyCourse" required>
+                    {% for c in session['courses'] %}
+                    <option value="{{ c }}">{{ c }}</option>
+                    {% endfor %}
+                </select>
+                <input type="file" id="verifyFile" required>
+                <button class="btn-upload" type="submit">Verify File Integrity</button>
+            </form>
+            {% else %}
+            <p style="color:#f87171;margin-top:10px;">⚠️ No courses assigned.</p>
+            {% endif %}
+            <div id="result"></div>
+        </div>
+
+    </div>
+
+    <div class="chain-status">
+        <h3>🔗 Blockchain Network Status</h3>
+        <div class="node-row" id="nodeStatus">
+            <span class="node-badge node-err">Loading...</span>
+        </div>
+    </div>
+</div>
+
+<script>
+// ── Config ────────────────────────────────────────────────────────────────
+const CONTRACT_ADDRESS = "0x1B1fb2428DD522Bd2201A0bBE9cFC8b1f8a93c63";
+const STUDENT_ID       = "{{ session['user'] }}";
+const CONTRACT_ABI = [
+  { "inputs":[{"name":"studentId","type":"string"},{"name":"courseId","type":"string"},{"name":"fileHash","type":"bytes32"}],
+    "name":"submitAssignment","outputs":[],"stateMutability":"nonpayable","type":"function" },
+  { "inputs":[{"name":"studentId","type":"string"},{"name":"courseId","type":"string"}],
+    "name":"getLatestSubmission",
+    "outputs":[{"name":"fileHash","type":"bytes32"},{"name":"timestamp","type":"uint256"},
+               {"name":"version","type":"uint256"},{"name":"submittedBy","type":"address"}],
+    "stateMutability":"view","type":"function" }
+];
+
+// ── MetaMask ──────────────────────────────────────────────────────────────
+async function connectMetaMask() {
+    if (!window.ethereum) { alert("MetaMask not installed. Visit https://metamask.io"); return; }
+    try {
+        const accts = await window.ethereum.request({ method:"eth_requestAccounts" });
+        setWallet(accts[0]);
+        alert("MetaMask connected!\nWallet: " + accts[0] + "\n\nThis wallet is now your cryptographic identity proof for submissions.");
+    } catch(e) { alert("Rejected: " + e.message); }
+}
+function setWallet(addr) {
+    const el = document.getElementById("walletInfo");
+    el.textContent = "🦊 " + addr.slice(0,6) + "..." + addr.slice(-4);
+    el.style.color = "#4ade80";
+    sessionStorage.setItem("walletAddress", addr);
+}
+
+// ── SHA-256 in browser (identical to Python hashlib SHA-256) ─────────────
+async function hashFile(file) {
+    const buf = await file.arrayBuffer();
+    const dig = await crypto.subtle.digest("SHA-256", buf);
+    return Array.from(new Uint8Array(dig)).map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+
+// ── Helper: add a status line to uploadMsg ────────────────────────────────
+function addLine(html) {
+    document.getElementById("uploadMsg").innerHTML += `<div class="step-line">${html}</div>`;
+}
+function setLine(html) {
+    document.getElementById("uploadMsg").innerHTML = `<div class="step-line">${html}</div>`;
+}
+
+// ── UPLOAD FORM — AJAX so MetaMask can fire before page changes ───────────
+const uploadForm = document.getElementById("uploadForm");
+if (uploadForm) {
+    uploadForm.addEventListener("submit", async function(e) {
+        e.preventDefault();   // ← CRITICAL: stops full page reload
+
+        const file     = document.getElementById("uploadFile").files[0];
+        const courseId = document.getElementById("uploadCourse").value;
+        const btn      = document.getElementById("uploadBtn");
+
+        if (!file) { alert("Please choose a file first."); return; }
+
+        btn.disabled    = true;
+        btn.textContent = "Processing...";
+        document.getElementById("uploadMsg").innerHTML = "";
+
+        // ── STEP 1: Hash the file client-side ──
+        addLine("⏳ <b>Step 1/3:</b> Computing SHA-256 hash...");
+        const hexHash = await hashFile(file);
+        addLine(`✅ <b>Step 1/3:</b> Hash: <span style="color:#94a3b8;font-size:11px">${hexHash.slice(0,20)}...</span>`);
+
+        // ── STEP 2: Send to Flask / Python blockchain ──
+        addLine("⏳ <b>Step 2/3:</b> Recording on Python blockchain...");
+        const fd = new FormData();
+        fd.append("file",      file);
+        fd.append("course_id", courseId);
+
+        let version = 1;
+        try {
+            const res  = await fetch("/submit_ajax", { method:"POST", body:fd });
+            const data = await res.json();
+            if (data.success) {
+                version = data.version || 1;
+                addLine(`✅ <b>Step 2/3:</b> Python blockchain recorded! Version ${version}`);
+            } else {
+                addLine(`❌ <b>Step 2/3:</b> Python blockchain error: ${data.message}`);
+            }
+        } catch(err) {
+            addLine(`❌ <b>Step 2/3:</b> Could not reach blockchain node: ${err.message}`);
+        }
+
+        // ── STEP 3: Send hash to Ethereum smart contract ──
+        addLine("⏳ <b>Step 3/3:</b> Sending to Sepolia smart contract via MetaMask...");
+
+        if (!window.ethereum || !window.ethers) {
+            addLine("⚠️ <b>Step 3/3:</b> MetaMask not connected — connect MetaMask and retry for Ethereum recording.");
+            btn.disabled    = false;
+            btn.textContent = "Upload & Record on Blockchain";
+            return;
+        }
+
+        try {
+            const provider  = new ethers.BrowserProvider(window.ethereum);
+            const signer    = await provider.getSigner();
+            const contract  = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+            const bytes32   = "0x" + hexHash.padStart(64, "0");
+
+            // MetaMask popup fires HERE — page is still alive because of e.preventDefault()
+            const tx = await contract.submitAssignment(STUDENT_ID, courseId, bytes32);
+
+            addLine(`⏳ <b>Step 3/3:</b> MetaMask confirmed. Waiting for Sepolia block...`);
+            await tx.wait();
+
+            addLine(`✅ <b>Step 3/3:</b> Sepolia confirmed! <span style="color:#a5b4fc">TX: ${tx.hash.slice(0,14)}...</span>`);
+            addLine(`🎉 <b style="color:#4ade80">All 3 layers recorded successfully!</b><br>
+                     <small style="color:#64748b">Python Blockchain ✅ &nbsp;|&nbsp; Ethereum Sepolia ✅ &nbsp;|&nbsp; Version ${version}</small>`);
+
+        } catch(err) {
+            if (err.code === 4001) {
+                addLine("⚠️ <b>Step 3/3:</b> MetaMask rejected by user — only Python blockchain recorded.");
+            } else {
+                addLine(`⚠️ <b>Step 3/3:</b> Smart contract error: ${err.message.slice(0,70)}`);
+            }
+        }
+
+        btn.disabled    = false;
+        btn.textContent = "Upload & Record on Blockchain";
+    });
+}
+
+// ── VERIFY FORM ───────────────────────────────────────────────────────────
+const verifyForm = document.getElementById("verifyForm");
+if (verifyForm) {
+    verifyForm.addEventListener("submit", async function(e) {
+        e.preventDefault();
+
+        const file     = document.getElementById("verifyFile").files[0];
+        const courseId = document.getElementById("verifyCourse").value;
+        const out      = document.getElementById("result");
+
+        if (!file) return;
+        out.innerHTML = "<div class='step-line' style='color:#94a3b8'>⏳ Computing hash...</div>";
+
+        const hexHash = await hashFile(file);
+
+        // 1️⃣ Python blockchain check
+        const fd = new FormData();
+        fd.append("file",       file);
+        fd.append("student_id", STUDENT_ID);
+        fd.append("course_id",  courseId);
+
+        try {
+            const res  = await fetch("/verify", { method:"POST", body:fd });
+            const data = await res.json();
+            const col  = data.status==="original"?"#4ade80":data.status==="old"?"#facc15":"#f87171";
+            out.innerHTML = `<div class="step-line">
+                <span style="color:${col}">${data.message.replace(/\n/g,"<br>")}</span>
+                <br><small style="color:#64748b">📦 Python Blockchain</small>
+            </div>`;
+        } catch(e) {
+            out.innerHTML = `<div class="step-line" style="color:#f87171">❌ Python check failed.</div>`;
+        }
+
+        // 2️⃣ Ethereum smart contract check (FREE — view function, no gas)
+        if (!window.ethereum || !window.ethers) {
+            out.innerHTML += `<div class="step-line"><small style="color:#64748b">🔗 Ethereum: Connect MetaMask to also verify on Sepolia.</small></div>`;
+            return;
+        }
+        try {
+            const provider = new ethers.BrowserProvider(window.ethereum);
+            const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+            const latest   = await contract.getLatestSubmission(STUDENT_ID, courseId);
+            const onChain  = latest.fileHash.toLowerCase();
+            const mine     = ("0x" + hexHash).toLowerCase();
+            const ts       = new Date(Number(latest.timestamp) * 1000).toLocaleString();
+
+            if (onChain === mine) {
+                out.innerHTML += `<div class="step-line">
+                    <span style="color:#4ade80">🔗 Ethereum: ✅ Matches Sepolia smart contract</span><br>
+                    <small style="color:#64748b">Version: ${latest.version} | Time: ${ts}</small><br>
+                    <small style="color:#64748b">Wallet: ${latest.submittedBy.slice(0,12)}...</small>
+                </div>`;
+            } else {
+                out.innerHTML += `<div class="step-line">
+                    <span style="color:#f87171">🔗 Ethereum: ❌ Hash does NOT match Sepolia record</span>
+                </div>`;
+            }
+        } catch(err) {
+            const noRecord = err.message?.includes("No submission") || err.message?.includes("revert");
+            out.innerHTML += `<div class="step-line"><small style="color:#64748b">🔗 Ethereum: ${
+                noRecord ? "No record found on smart contract yet." : "Could not reach smart contract."
+            }</small></div>`;
+        }
+    });
+}
+
+// ── Node status poll ──────────────────────────────────────────────────────
+async function refreshNodes() {
+    try {
+        const d = await (await fetch("/api/chain_status")).json();
+        document.getElementById("nodeStatus").innerHTML =
+            `<span class="node-badge ${d.node1.valid?'node-ok':'node-err'}">
+                Node 1 – ${d.node1.valid?'✅ Valid':'❌ Invalid'} | ${d.node1.length} blocks
+             </span>
+             <span class="node-badge ${d.node2.valid?'node-ok':'node-err'}">
+                Node 2 – ${d.node2.valid?'✅ Valid':'❌'} | ${d.node2.length} blocks
+             </span>
+             <span class="node-badge node-eth">🔗 Sepolia: 0x1B1f...93c63 ✅</span>`;
+    } catch(e) {
+        document.getElementById("nodeStatus").innerHTML =
+            '<span class="node-badge node-err">Nodes unreachable</span>';
+    }
+}
+refreshNodes();
+setInterval(refreshNodes, 10000);
+
+// ── Restore wallet on reload ──────────────────────────────────────────────
+window.addEventListener("load", () => {
+    const w = sessionStorage.getItem("walletAddress");
+    if (w) setWallet(w);
+    window.ethereum?.on("accountsChanged", a => a.length ? setWallet(a[0]) : (() => {
+        sessionStorage.removeItem("walletAddress");
+        document.getElementById("walletInfo").textContent = "MetaMask: Disconnected";
+        document.getElementById("walletInfo").style.color = "#94a3b8";
+    })());
+});
+</script>
+</body>
+</html>

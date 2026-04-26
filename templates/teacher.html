@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Teacher Dashboard – BlockSubmit</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',sans-serif; }
+        body {
+            background:linear-gradient(-45deg,#000000,#111111,#1a1a1a,#000000);
+            background-size:400% 400%;
+            animation:gradientMove 12s ease infinite;
+            color:white; min-height:100vh;
+        }
+        @keyframes gradientMove {
+            0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}
+        }
+        .header {
+            display:flex; justify-content:space-between; align-items:center;
+            padding:20px 60px; border-bottom:1px solid rgba(255,255,255,.1);
+        }
+        .logo { font-size:24px; font-weight:900; letter-spacing:4px;
+            text-shadow:0 0 6px rgba(255,255,255,.7),0 0 12px rgba(0,255,255,.3); }
+        .header-right { display:flex; gap:12px; align-items:center; }
+        .btn-metamask {
+            background:linear-gradient(135deg,#f6851b,#e2761b);
+            padding:10px 18px; border-radius:10px; border:none;
+            color:white; cursor:pointer; font-weight:bold; font-size:13px; transition:.3s;
+        }
+        .btn-logout {
+            background:#ff4d4d; padding:10px 18px; border-radius:10px;
+            border:none; color:white; cursor:pointer; font-weight:bold;
+        }
+        .wallet-info { font-size:12px; color:#94a3b8;
+            background:rgba(255,255,255,.05); padding:8px 14px; border-radius:8px; }
+        .container { padding:35px 60px; }
+        h2 { margin-bottom:24px; font-size:26px; }
+        select { padding:11px 16px; border-radius:10px; background:#111; color:white; border:none; cursor:pointer; }
+        .grid { display:flex; flex-wrap:wrap; gap:18px; margin-top:20px; }
+        .card {
+            background:rgba(255,255,255,.05); padding:20px; border-radius:18px; width:300px;
+            backdrop-filter:blur(15px); box-shadow:0 0 25px rgba(0,0,0,.8); transition:.3s;
+        }
+        .card:hover { transform:translateY(-4px); }
+        .card p { margin:5px 0; font-size:13px; }
+        .hash { font-size:10px; color:#94a3b8; word-break:break-all; margin-top:6px; }
+        .badge {
+            display:inline-block; padding:2px 8px; border-radius:6px;
+            font-size:11px; font-weight:bold; margin-top:4px;
+        }
+        .badge-v { background:rgba(99,102,241,.3); color:#a5b4fc; }
+        .verify-box {
+            margin-top:40px; max-width:440px;
+            background:rgba(255,255,255,.05); padding:26px;
+            border-radius:18px; backdrop-filter:blur(15px);
+            box-shadow:0 0 30px rgba(0,0,0,.8);
+        }
+        .verify-box h3 { margin-bottom:12px; }
+        input[type=text] { width:100%; padding:11px; margin:8px 0;
+            border-radius:9px; border:none; background:#e2e8f0; color:black; }
+        input[type=file] { width:100%; padding:11px; margin:8px 0;
+            border-radius:9px; border:1px dashed #444; background:#1e1e1e; color:white; }
+        .btn-verify {
+            width:100%; padding:13px; background:white; color:black;
+            font-weight:bold; border:none; border-radius:10px; cursor:pointer; transition:.3s;
+        }
+        .btn-verify:hover { background:#ddd; transform:scale(1.02); }
+        #result { text-align:center; font-weight:bold; margin-top:10px; font-size:13px; }
+        .section-label { font-size:11px; color:#64748b; text-transform:uppercase;
+            letter-spacing:1px; margin-bottom:6px; }
+        .chain-status {
+            margin-top:30px; background:rgba(255,255,255,.03);
+            border-radius:14px; padding:18px;
+        }
+        .node-row { display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; }
+        .node-badge { padding:7px 14px; border-radius:8px; font-size:12px; font-weight:bold; }
+        .node-ok  { background:rgba(74,222,128,.15); color:#4ade80; }
+        .node-err { background:rgba(248,113,113,.15); color:#f87171; }
+        .empty-msg { color:#64748b; padding:30px 0; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="logo">BLOCKSUBMIT</div>
+    <div class="header-right">
+        <div class="wallet-info" id="walletInfo">MetaMask: Not connected</div>
+        <button class="btn-metamask" onclick="connectMetaMask()">🦊 Connect MetaMask</button>
+        <a href="/logout"><button class="btn-logout">Logout</button></a>
+    </div>
+</div>
+
+<div class="container">
+    <h2>👨‍🏫 Teacher Dashboard &nbsp;<small style="font-size:14px;color:#94a3b8">{{ session['user'] }}</small></h2>
+
+    <!-- Course filter -->
+    <p class="section-label">Filter by course</p>
+    {% if courses %}
+    <form method="POST">
+        <select name="course_id" onchange="this.form.submit()">
+            <option value="">All Courses</option>
+            {% for c in courses %}
+            <option value="{{ c }}" {% if selected_course==c %}selected{% endif %}>{{ c }}</option>
+            {% endfor %}
+        </select>
+    </form>
+    {% else %}
+    <p style="color:#f87171;margin:10px 0 20px;">⚠️ No courses assigned to your account. Contact an admin.</p>
+    {% endif %}
+
+    <!-- Blockchain records -->
+    <div class="grid">
+        {% if chain %}
+            {% for block in chain %}
+            <div class="card">
+                <p><b>🎓 Student:</b> {{ block.student_id }}</p>
+                <p><b>📚 Course:</b> {{ block.course_id }}</p>
+                <span class="badge badge-v">Version {{ block.version }}</span>
+                <p style="margin-top:8px;font-size:11px;color:#94a3b8">🕒 {{ block.timestamp }}</p>
+                <p class="hash"><b>SHA-256:</b><br>{{ block.file_hash }}</p>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p class="empty-msg">No submissions found for this filter.</p>
+        {% endif %}
+    </div>
+
+    <!-- Verify box -->
+    <div class="verify-box">
+        <h3>🔍 Verify Submission Integrity</h3>
+        <form id="verifyForm">
+            <input type="text" name="student_id" placeholder="Student ID (e.g. PES2UG23CS412)" required>
+            {% if courses %}
+            <select name="course_id" required style="width:100%;padding:11px;margin:8px 0;border-radius:9px;border:none;background:#111;color:white;">
+                {% for c in courses %}
+                <option value="{{ c }}">{{ c }}</option>
+                {% endfor %}
+            </select>
+            {% else %}
+            <input type="text" name="course_id" placeholder="Course ID (e.g. CS101)" required
+                style="width:100%;padding:11px;margin:8px 0;border-radius:9px;border:none;background:#e2e8f0;color:black;">
+            {% endif %}
+            <input type="file" name="file" required>
+            <button class="btn-verify" type="submit">Verify File</button>
+        </form>
+        <p id="result"></p>
+    </div>
+
+    <!-- Chain status -->
+    <div class="chain-status">
+        <p class="section-label">Blockchain Network Status</p>
+        <div class="node-row" id="nodeStatus">
+            <span class="node-badge node-err">Loading...</span>
+        </div>
+    </div>
+</div>
+
+<script>
+/* ── Verify ── */
+document.getElementById("verifyForm").onsubmit = async function(e) {
+    e.preventDefault();
+    const fd  = new FormData(this);
+    const res = await fetch("/verify", {method:"POST", body:fd});
+    const d   = await res.json();
+    const el  = document.getElementById("result");
+    el.innerHTML = d.message.replace(/\n/g,"<br>");
+    el.style.color = d.status==="original" ? "#4ade80"
+                   : d.status==="old"      ? "#facc15" : "#f87171";
+};
+
+/* ── Node status ── */
+async function refreshNodeStatus() {
+    try {
+        const r = await fetch("/api/chain_status");
+        const d = await r.json();
+        document.getElementById("nodeStatus").innerHTML = `
+            <span class="node-badge ${d.node1.valid?'node-ok':'node-err'}">
+                Node 1 – ${d.node1.valid?'✅ Valid':'❌ Invalid'} | ${d.node1.length} blocks
+            </span>
+            <span class="node-badge ${d.node2.valid?'node-ok':'node-err'}">
+                Node 2 – ${d.node2.valid?'✅ Valid':'❌ Invalid'} | ${d.node2.length} blocks
+            </span>`;
+    } catch(e) {
+        document.getElementById("nodeStatus").innerHTML =
+            '<span class="node-badge node-err">Nodes unreachable</span>';
+    }
+}
+refreshNodeStatus();
+setInterval(refreshNodeStatus, 10000);
+
+/* ── MetaMask ── */
+async function connectMetaMask() {
+    if (typeof window.ethereum === "undefined") {
+        alert("MetaMask is not installed. Visit https://metamask.io to install it.");
+        return;
+    }
+    try {
+        const accounts = await window.ethereum.request({method:"eth_requestAccounts"});
+        const account  = accounts[0];
+        document.getElementById("walletInfo").textContent =
+            "🦊 " + account.slice(0,6) + "..." + account.slice(-4);
+        document.getElementById("walletInfo").style.color = "#4ade80";
+        sessionStorage.setItem("walletAddress", account);
+    } catch(err) {
+        alert("Connection rejected: " + err.message);
+    }
+}
+
+window.addEventListener("load", () => {
+    const stored = sessionStorage.getItem("walletAddress");
+    if (stored) {
+        document.getElementById("walletInfo").textContent =
+            "🦊 " + stored.slice(0,6) + "..." + stored.slice(-4);
+        document.getElementById("walletInfo").style.color = "#4ade80";
+    }
+});
+</script>
+</body>
+</html>

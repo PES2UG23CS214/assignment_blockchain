@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BlockSubmit Signup</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+body {
+    height: 100vh;
+    color: white;
+    overflow: hidden;
+    position: relative;
+
+    background: linear-gradient(-45deg, #000000, #111111, #1a1a1a, #000000);
+    background-size: 400% 400%;
+    animation: gradientMove 12s ease infinite;
+}
+
+@keyframes gradientMove {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* 🌌 BACKGROUND WORDS */
+.bg-elements {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.bg-elements span {
+    position: absolute;
+    color: rgba(255,255,255,0.5);
+    font-size: 26px;
+    font-weight: 700;
+
+    text-shadow:
+        0 0 8px rgba(255,255,255,0.3),
+        0 0 12px rgba(0,255,255,0.2);
+
+    animation: float 18s ease-in-out infinite;
+}
+
+/* positions */
+.bg-elements span:nth-child(1){ top:10%; left:20%;}
+.bg-elements span:nth-child(2){ top:30%; left:70%;}
+.bg-elements span:nth-child(3){ top:60%; left:10%;}
+.bg-elements span:nth-child(4){ top:80%; left:50%;}
+.bg-elements span:nth-child(5){ top:20%; left:40%;}
+.bg-elements span:nth-child(6){ top:50%; left:80%;}
+.bg-elements span:nth-child(7){ top:75%; left:25%;}
+.bg-elements span:nth-child(8){ top:40%; left:60%;}
+
+@keyframes float {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-25px); }
+    100% { transform: translateY(0); }
+}
+
+/* HEADER */
+.header {
+    position: relative;
+    z-index: 2;
+    padding: 20px 50px;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    text-shadow:
+        0 0 5px rgba(255,255,255,0.6),
+        0 0 10px rgba(0,255,255,0.3);
+}
+
+/* FORM */
+.container {
+    height: calc(100vh - 80px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2;
+    position: relative;
+}
+
+.card {
+    background: rgba(255,255,255,0.05);
+    padding: 45px;
+    border-radius: 25px;
+    width: 360px;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 0 50px rgba(0,0,0,0.9);
+    text-align: center;
+}
+
+h2 {
+    margin-bottom: 20px;
+}
+
+input, select {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border-radius: 8px;
+    border: none;
+    background: #e2e8f0;
+    color: black;
+}
+
+.input-box {
+    position: relative;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 10px;
+    top: 14px;
+    cursor: pointer;
+    color: #555;
+}
+
+button {
+    width: 100%;
+    padding: 14px;
+    margin-top: 15px;
+    background: white;
+    border-radius: 10px;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #ddd;
+    transform: scale(1.02);
+}
+
+.msg {
+    margin-top: 10px;
+    color: #ff6b6b;
+}
+
+.back-link {
+    margin-top: 15px;
+    font-size: 13px;
+}
+
+.back-link a {
+    color: #38bdf8;
+}
+</style>
+</head>
+
+<body>
+
+<div class="bg-elements">
+    <span>username</span>
+    <span>password</span>
+    <span>CS101</span>
+    <span>block</span>
+    <span>hash</span>
+    <span>verify</span>
+    <span>trusted</span>
+    <span>course_id</span>
+</div>
+
+<div class="header">
+    <div class="logo">BLOCKSUBMIT</div>
+</div>
+
+<div class="container">
+<div class="card">
+
+<h2>Create Account</h2>
+
+<form method="POST">
+
+<input type="text" name="username" placeholder="Username" required>
+
+<div class="input-box">
+    <input type="password" id="password" name="password" placeholder="Password" required>
+
+    <!-- ✅ UPDATED EYE -->
+    <span class="toggle-password" onclick="togglePassword()" id="eye">
+        👁️‍🗨️
+    </span>
+</div>
+
+<select name="role" required>
+    <option value="">Select Role</option>
+    <option value="student">Student</option>
+    <option value="teacher">Teacher</option>
+</select>
+
+<input type="text" name="courses" placeholder="Courses: CS101,CS102,CS103" required title="Enter comma-separated course IDs">
+
+<button type="submit">Create Account</button>
+
+</form>
+
+{% if msg %}
+    <p class="msg">{{ msg }}</p>
+{% endif %}
+
+<div class="back-link">
+    Already have an account? <a href="/login">Login</a>
+</div>
+
+</div>
+</div>
+
+<script>
+function togglePassword() {
+    const pwd = document.getElementById("password");
+    const eye = document.getElementById("eye");
+
+    if (pwd.type === "password") {
+        pwd.type = "text";
+        eye.innerHTML = "👁️";   // open
+    } else {
+        pwd.type = "password";
+        eye.innerHTML = "👁️‍🗨️"; // closed
+    }
+}
+</script>
+
+</body>
+</html>

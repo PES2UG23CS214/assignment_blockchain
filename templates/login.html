@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>BlockSubmit Login</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        body {
+            height: 100vh;
+            display: flex;
+            color: white;
+            overflow: hidden;
+
+            background: linear-gradient(-45deg, #000000, #111111, #1a1a1a, #000000);
+            background-size: 400% 400%;
+            animation: gradientMove 12s ease infinite;
+        }
+
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .left {
+            width: 60%;
+            padding: 80px;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 900;
+            letter-spacing: 4px;
+            color: #ffffff;
+            text-shadow: 0 0 4px rgba(255,255,255,0.6),
+                         0 0 8px rgba(0,255,255,0.3);
+            animation: glow 3s infinite alternate;
+        }
+
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 4px rgba(255,255,255,0.5),
+                             0 0 8px rgba(0,255,255,0.2);
+            }
+            to {
+                text-shadow: 0 0 6px rgba(255,255,255,0.7),
+                             0 0 12px rgba(0,255,255,0.3);
+            }
+        }
+
+        .title {
+            font-size: 70px;
+            font-weight: 900;
+            margin-top: 50px;
+            line-height: 1.1;
+        }
+
+        .line1 {
+            opacity: 0;
+            animation: fadeInLoop 5s ease infinite;
+        }
+
+        .line2 {
+            opacity: 0;
+            transform: translateY(30px);
+            animation: slideUpLoop 5s ease infinite;
+            animation-delay: 0.8s;
+        }
+
+        @keyframes fadeInLoop {
+            0% { opacity: 0; }
+            10% { opacity: 1; }
+            40% { opacity: 1; }
+            50% { opacity: 0; }
+            100% { opacity: 0; }
+        }
+
+        @keyframes slideUpLoop {
+            0% { opacity: 0; transform: translateY(30px); }
+            20% { opacity: 1; transform: translateY(0); }
+            40% { opacity: 1; }
+            55% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 0; }
+        }
+
+        .desc {
+            margin-top: 20px;
+            opacity: 0.6;
+        }
+
+        .right {
+            width: 40%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .login-card {
+            background: rgba(255,255,255,0.05);
+            padding: 60px 50px;
+            border-radius: 25px;
+            width: 420px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 0 50px rgba(0,0,0,0.9);
+            text-align: center;
+        }
+
+        .login-card h3 {
+            margin-bottom: 20px;
+        }
+
+        .role-toggle {
+            display: flex;
+            margin-bottom: 25px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 30px;
+            padding: 5px;
+        }
+
+        .role-toggle input {
+            display: none;
+        }
+
+        .role-toggle label {
+            flex: 1;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 30px;
+        }
+
+        .role-toggle input:checked + label {
+            background: white;
+            color: black;
+        }
+
+        .input-box {
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .input-box input {
+            width: 100%;
+            border: none;
+            border-bottom: 2px solid #555;
+            padding: 12px;
+            background: transparent;
+            color: white;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 12px;
+            cursor: pointer;
+            color: #aaa;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: white;
+            border: none;
+            color: black;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .login-btn:hover {
+            background: #f1f1f1;
+        }
+
+        .msg {
+            margin-top: 10px;
+            color: #ff6b6b;
+        }
+
+        .signup-text {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #aaa;
+        }
+
+        .signup-text a {
+            color: #38bdf8;
+            text-decoration: none;
+        }
+
+        .signup-text a:hover {
+            color: white;
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="left">
+    <div class="logo">BLOCKSUBMIT</div>
+
+    <div class="title">
+        <span class="line1">TRUSTED.</span><br>
+        <span class="line2">VERIFIED.</span>
+    </div>
+
+    <div class="desc">
+        Submit assignments with integrity and track every version with trust.
+    </div>
+</div>
+
+<div class="right">
+    <div class="login-card">
+        <h3>LOGIN</h3>
+
+        <form method="POST">
+
+            <div class="role-toggle">
+                <input type="radio" id="student" name="role" value="student" checked>
+                <label for="student">Student</label>
+
+                <input type="radio" id="teacher" name="role" value="teacher">
+                <label for="teacher">Teacher</label>
+            </div>
+
+            <div class="input-box">
+                <input type="text" name="username" placeholder="Enter Username" required>
+            </div>
+
+            <div class="input-box">
+                <input type="password" id="password" name="password" placeholder="Enter Password" required>
+
+                <!-- ✅ UPDATED EYE -->
+                <span class="toggle-password" onclick="togglePassword()" id="eye">
+                    👁️‍🗨️
+                </span>
+            </div>
+
+            <button class="login-btn">LOGIN</button>
+        </form>
+
+        {% if msg %}
+            <p class="msg">{{ msg }}</p>
+        {% endif %}
+
+        <p class="signup-text">
+            New user? <a href="/signup">Sign Up</a>
+        </p>
+
+    </div>
+</div>
+
+<script>
+function togglePassword() {
+    const pwd = document.getElementById("password");
+    const eye = document.getElementById("eye");
+
+    if (pwd.type === "password") {
+        pwd.type = "text";
+        eye.innerHTML = "👁️";   // open eye
+    } else {
+        pwd.type = "password";
+        eye.innerHTML = "👁️‍🗨️"; // closed eye
+    }
+}
+</script>
+
+</body>
+</html>
